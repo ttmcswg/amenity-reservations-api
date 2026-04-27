@@ -378,18 +378,17 @@ Typical errors:
 
 ## Testing
 
-Run full suite:
+### Test command matrix
 
-```bash
-npm run test
-```
-
-Additional:
-
-```bash
-npm run test:watch
-npm run test:coverage
-```
+| Command | What runs |
+|---|---|
+| `npm run test:all` | All tests (explicit alias for discoverability) |
+| `npm run test` | All tests |
+| `npm run test:unit` | Unit tests only (`*.spec.ts`, excluding `*.e2e.spec.ts`) |
+| `npm run test:integration` | Integration/e2e tests except auth DB e2e (fast path) |
+| `npm run test:auth:e2e` | Auth integration spec only |
+| `npm run test:watch` | Watch mode |
+| `npm run test:coverage` | Coverage run |
 
 Auth e2e requirement:
 
@@ -407,10 +406,35 @@ Auth e2e requirement:
 export DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:5432/amenity_reservations_test
 ```
 
-1. Run tests:
+3. Run tests:
 
 ```bash
 npm run test
+```
+
+### Quick test DB in Docker (temporary)
+
+Start temporary PostgreSQL test DB:
+
+```bash
+docker run --name amenity-test-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=amenity_reservations_test \
+  -p 5433:5432 -d postgres:16-alpine
+```
+
+Run integration tests against it:
+
+```bash
+export DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:5433/amenity_reservations_test
+npm run test:auth:e2e
+```
+
+Stop and remove temporary container:
+
+```bash
+docker rm -f amenity-test-db
 ```
 
 Safety note:
