@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import amenitiesRouter from './modules/amenities/amenityReservations.routes';
 import userReservationsRouter from './modules/reservations/userReservations.routes';
+import csvParseRouter from './modules/csv/csvParse.routes';
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.get('/health', (_req, res) => {
 
 app.use(amenitiesRouter);
 app.use(userReservationsRouter);
+app.use(csvParseRouter);
 
 export default app;
