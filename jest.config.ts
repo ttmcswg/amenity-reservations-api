@@ -5,6 +5,7 @@ const config: Config = {
   testEnvironment: 'node',
   testMatch: ['**/*.spec.ts'],
   clearMocks: true,
+  setupFiles: ['<rootDir>/test/setup-env.ts'],
 };
 
 export default config;
