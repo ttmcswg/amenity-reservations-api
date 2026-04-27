@@ -351,9 +351,30 @@ npm run test:watch
 npm run test:coverage
 ```
 
-Notes on isolation:
-- Most tests are file/mocked-service based and deterministic.
-- Auth DB integration tests require `DATABASE_URL_TEST`; without it, that suite is skipped intentionally.
+Auth e2e requirement:
+- Auth integration tests use a dedicated PostgreSQL test database.
+- If `DATABASE_URL_TEST` is not set, auth e2e tests are intentionally skipped.
+- Other unit/integration tests still run.
+
+### How to run full test suite (including auth e2e)
+
+1. Create a separate test database (not your dev DB), for example:
+   - `amenity_reservations_test`
+2. Set test DB connection string:
+
+```bash
+export DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:5432/amenity_reservations_test
+```
+
+3. Run tests:
+
+```bash
+npm run test
+```
+
+Safety note:
+- Never point `DATABASE_URL_TEST` to development or production databases.
+- Keep test DB fully isolated because tests can truncate/reset auth tables.
 
 ## Security Notes
 
