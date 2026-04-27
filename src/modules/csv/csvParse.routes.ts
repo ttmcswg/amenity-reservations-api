@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import multer from 'multer';
+import { requireAuth } from '../auth/auth.middleware';
 import { parseCsvFile } from './csvParse.controller';
 import { uploadCsv } from './csvUpload';
 
 const csvParseRouter = Router();
 
-csvParseRouter.post('/csv/parse', uploadCsv.single('file'), parseCsvFile);
+csvParseRouter.post('/csv/parse', requireAuth, uploadCsv.single('file'), parseCsvFile);
 
 csvParseRouter.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   void _next;

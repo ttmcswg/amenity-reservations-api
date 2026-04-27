@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { config } from '../../config/env';
 import {
   createUser,
@@ -8,6 +7,7 @@ import {
   findUserByUsername,
 } from './auth.repository';
 import { LoginInput, RegisterInput } from './auth.schema';
+import { signAccessToken } from './auth.token';
 
 class AuthError extends Error {
   public readonly statusCode: number;
@@ -24,13 +24,10 @@ interface AuthUserSafe {
   username: string;
 }
 
-interface AuthTokenPayload {
+export interface AuthSuccessResponse {
   accessToken: string;
   tokenType: 'Bearer';
   expiresIn: string;
-}
-
-export interface AuthSuccessResponse extends AuthTokenPayload {
   user: AuthUserSafe;
 }
 
@@ -43,26 +40,6 @@ function toSafeUser(user: { id: string; email: string; username: string }): Auth
     id: user.id,
     email: user.email,
     username: user.username,
-  };
-}
-
-function issueAccessToken(user: { id: string; username: string }): AuthTokenPayload {
-  const expiresIn = config.jwtAccessExpiresIn as jwt.SignOptions['expiresIn'];
-  const accessToken = jwt.sign(
-    {
-      sub: user.id,
-      username: user.username,
-    },
-    config.jwtAccessSecret,
-    {
-      expiresIn,
-    },
-  );
-
-  return {
-    accessToken,
-    tokenType: 'Bearer',
-    expiresIn: config.jwtAccessExpiresIn,
   };
 }
 
@@ -89,7 +66,7 @@ export async function register(input: RegisterInput): Promise<AuthSuccessRespons
 
   return {
     user: toSafeUser(createdUser),
-    ...issueAccessToken(createdUser),
+    ...signAccessToken(createdUser),
   };
 }
 
@@ -106,7 +83,7 @@ export async function login(input: LoginInput): Promise<AuthSuccessResponse> {
 
   return {
     user: toSafeUser(user),
-    ...issueAccessToken(user),
+    ...signAccessToken(user),
   };
 }
 

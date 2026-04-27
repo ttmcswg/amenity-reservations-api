@@ -1,15 +1,15 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { login, register } from './auth.service';
 import * as authRepository from './auth.repository';
+import * as authToken from './auth.token';
 
 jest.mock('./auth.repository');
 jest.mock('bcrypt');
-jest.mock('jsonwebtoken');
+jest.mock('./auth.token');
 
 const mockedRepository = authRepository as jest.Mocked<typeof authRepository>;
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
-const mockedJwt = jwt as jest.Mocked<typeof jwt>;
+const mockedAuthToken = authToken as jest.Mocked<typeof authToken>;
 const mockedHash = bcrypt.hash as unknown as jest.Mock<Promise<string>, [string, number]>;
 
 describe('auth.service', () => {
@@ -29,7 +29,11 @@ describe('auth.service', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockedJwt.sign.mockReturnValueOnce('jwt-token' as never);
+    mockedAuthToken.signAccessToken.mockReturnValueOnce({
+      accessToken: 'jwt-token',
+      tokenType: 'Bearer',
+      expiresIn: '15m',
+    });
 
     const result = await register({
       email: 'John@Example.com',
@@ -89,7 +93,11 @@ describe('auth.service', () => {
       updatedAt: new Date(),
     });
     mockedBcrypt.compare.mockResolvedValueOnce(true as never);
-    mockedJwt.sign.mockReturnValueOnce('jwt-login-token' as never);
+    mockedAuthToken.signAccessToken.mockReturnValueOnce({
+      accessToken: 'jwt-login-token',
+      tokenType: 'Bearer',
+      expiresIn: '15m',
+    });
 
     const result = await login({
       identifier: 'john',
@@ -140,7 +148,11 @@ describe('auth.service', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockedJwt.sign.mockReturnValueOnce('jwt-token' as never);
+    mockedAuthToken.signAccessToken.mockReturnValueOnce({
+      accessToken: 'jwt-token',
+      tokenType: 'Bearer',
+      expiresIn: '15m',
+    });
 
     await register({
       email: 'user@example.com',
@@ -148,15 +160,11 @@ describe('auth.service', () => {
       password: 'Password123',
     });
 
-    expect(mockedJwt.sign).toHaveBeenCalledWith(
-      {
-        sub: 'user-42',
+    expect(mockedAuthToken.signAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'user-42',
         username: 'user42',
-      },
-      expect.any(String),
-      {
-        expiresIn: expect.any(String),
-      },
+      }),
     );
   });
 });
