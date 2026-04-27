@@ -1,6 +1,7 @@
 import path from 'path';
 import { readCsv } from '../../utils/csvReader';
 import { minutesToHHMM } from '../../utils/time';
+import { UserDayReservations, UserReservationDto } from './userReservations.types';
 
 const AMENITIES_CSV_PATH = path.resolve(process.cwd(), 'data/amenity.csv');
 const RESERVATIONS_CSV_PATH = path.resolve(process.cwd(), 'data/reservations.csv');
@@ -20,14 +21,6 @@ interface ReservationCsvRow {
   Date: string;
 }
 
-export interface AmenityReservationView {
-  reservationId: number;
-  userId: number;
-  startTime: string;
-  duration: number;
-  amenityName: string;
-}
-
 interface ParsedReservation {
   reservationId: number;
   amenityId: number;
@@ -35,23 +28,6 @@ interface ParsedReservation {
   startTime: number;
   endTime: number;
   date: number;
-}
-
-function isSameDate(reservationDate: number, queryDate: number): boolean {
-  return reservationDate === queryDate;
-}
-
-function mapReservationToDto(
-  reservation: ParsedReservation,
-  amenityName: string,
-): AmenityReservationView {
-  return {
-    reservationId: reservation.reservationId,
-    userId: reservation.userId,
-    startTime: minutesToHHMM(reservation.startTime),
-    duration: reservation.endTime - reservation.startTime,
-    amenityName,
-  };
 }
 
 function parseReservationRow(row: ReservationCsvRow): ParsedReservation | null {
@@ -95,29 +71,48 @@ function parseReservationRow(row: ReservationCsvRow): ParsedReservation | null {
   };
 }
 
-export function getAmenityReservationsByDate(
-  amenityId: number,
-  date: number,
-): { amenityExists: boolean; items: AmenityReservationView[] } {
+function mapReservationToDto(
+  reservation: ParsedReservation,
+  amenityNameById: Map<number, string>,
+): UserReservationDto {
+  return {
+    reservationId: reservation.reservationId,
+    amenityId: reservation.amenityId,
+    amenityName: amenityNameById.get(reservation.amenityId) ?? 'Unknown amenity',
+    startTime: minutesToHHMM(reservation.startTime),
+    duration: reservation.endTime - reservation.startTime,
+  };
+}
+
+export function getUserReservationsGroupedByDay(userId: number): UserDayReservations[] {
   const amenities = readCsv<AmenityCsvRow>(AMENITIES_CSV_PATH);
   const reservations = readCsv<ReservationCsvRow>(RESERVATIONS_CSV_PATH);
 
-  const amenity = amenities.find((item) => {
-    const parsedAmenityId = Number(item.Id);
-    return !Number.isNaN(parsedAmenityId) && parsedAmenityId === amenityId;
+  const amenityNameById = new Map<number, string>();
+  amenities.forEach((amenity) => {
+    const amenityId = Number(amenity.Id);
+    if (!Number.isNaN(amenityId)) {
+      amenityNameById.set(amenityId, amenity.Name);
+    }
   });
-  if (!amenity) {
-    return { amenityExists: false, items: [] };
-  }
 
-  const items = reservations
+  const userReservations = reservations
     .map(parseReservationRow)
     .filter((reservation): reservation is ParsedReservation => reservation !== null)
-    .filter(
-      (reservation) => reservation.amenityId === amenityId && isSameDate(reservation.date, date),
-    )
-    .sort((a, b) => a.startTime - b.startTime)
-    .map((reservation) => mapReservationToDto(reservation, amenity.Name));
+    .filter((reservation) => reservation.userId === userId)
+    .sort((a, b) => a.startTime - b.startTime);
 
-  return { amenityExists: true, items };
+  const groupedByDate = new Map<number, UserReservationDto[]>();
+  userReservations.forEach((reservation) => {
+    const current = groupedByDate.get(reservation.date) ?? [];
+    current.push(mapReservationToDto(reservation, amenityNameById));
+    groupedByDate.set(reservation.date, current);
+  });
+
+  return [...groupedByDate.entries()]
+    .sort(([dateA], [dateB]) => dateA - dateB)
+    .map(([date, dayReservations]) => ({
+      date,
+      reservations: dayReservations,
+    }));
 }
