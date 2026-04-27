@@ -1,49 +1,40 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
 import { getAmenityReservationsByDate } from './amenityReservations.service';
+import {
+  amenityReservationsParamsSchema,
+  amenityReservationsQuerySchema,
+} from './amenityReservations.schema';
 
-const DAY_IN_MS = 86_400_000;
+function mapZodIssues(error: ZodError): string[] {
+  return error.issues.map((issue) => {
+    const path = issue.path.length > 0 ? issue.path.join('.') : 'request';
+    return `${path}: ${issue.message}`;
+  });
+}
 
 export function getAmenityReservations(req: Request, res: Response): void {
-  const amenityIdRaw = req.params.id;
-  const dateRaw = req.query.date;
-  const amenityId = Number(amenityIdRaw);
-
-  if (Number.isNaN(amenityId) || !Number.isFinite(amenityId) || amenityId <= 0) {
+  const paramsValidation = amenityReservationsParamsSchema.safeParse(req.params);
+  if (!paramsValidation.success) {
     res.status(StatusCodes.BAD_REQUEST).json({
-      message: 'Invalid amenity id. It must be a positive number.',
+      message: 'Validation failed',
+      issues: mapZodIssues(paramsValidation.error),
     });
     return;
   }
 
-  if (dateRaw === undefined) {
+  const queryValidation = amenityReservationsQuerySchema.safeParse(req.query);
+  if (!queryValidation.success) {
     res.status(StatusCodes.BAD_REQUEST).json({
-      message: 'Missing required query parameter: date.',
+      message: 'Validation failed',
+      issues: mapZodIssues(queryValidation.error),
     });
     return;
   }
 
-  if (Array.isArray(dateRaw)) {
-    res.status(StatusCodes.BAD_REQUEST).json({
-      message: 'Invalid date query parameter. Provide a single day-start timestamp.',
-    });
-    return;
-  }
-
-  const date = Number(dateRaw);
-  if (Number.isNaN(date) || !Number.isFinite(date) || date <= 0) {
-    res.status(StatusCodes.BAD_REQUEST).json({
-      message: 'Invalid date query parameter. Use day-start timestamp.',
-    });
-    return;
-  }
-
-  if (!Number.isInteger(date) || date % DAY_IN_MS !== 0) {
-    res.status(StatusCodes.BAD_REQUEST).json({
-      message: 'Invalid date query parameter. It must be a day-start timestamp in milliseconds.',
-    });
-    return;
-  }
+  const amenityId = paramsValidation.data.id;
+  const date = queryValidation.data.date;
 
   const result = getAmenityReservationsByDate(amenityId, date);
   if (!result.amenityExists) {
