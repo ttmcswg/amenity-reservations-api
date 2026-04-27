@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import amenitiesRouter from './modules/amenities/amenityReservations.routes';
 import userReservationsRouter from './modules/reservations/userReservations.routes';
 import csvParseRouter from './modules/csv/csvParse.routes';
+import authRouter from './modules/auth/auth.routes';
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.get('/health', (_req, res) => {
 app.use(amenitiesRouter);
 app.use(userReservationsRouter);
 app.use(csvParseRouter);
+app.use('/auth', authRouter);
 
 export default app;
