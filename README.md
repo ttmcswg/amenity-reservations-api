@@ -112,6 +112,7 @@ npm run docker:down
 Security note:
 - Compose uses variable substitution (`${VAR}` / `${VAR:?error}`), no hardcoded secrets.
 - Missing required secrets fail fast before containers start.
+- Runtime image includes `/app/data` CSV fixtures required by reservation endpoints.
 
 ## Scripts
 
