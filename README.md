@@ -53,54 +53,87 @@ The project includes: Task 1 (amenity reservations by day), Task 2 (user reserva
 `.env` is local-only and ignored by git.  
 `.env.example` contains placeholders/template values.
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `PORT` | No | `3000` | API port |
-| `NODE_ENV` | No | `development` | Runtime environment |
-| `DATABASE_URL` | Yes | - | PostgreSQL connection URL |
-| `JWT_ACCESS_SECRET` | Yes | - | JWT signing secret (min 32 chars) |
-| `JWT_ACCESS_EXPIRES_IN` | No | `15m` | Access token TTL |
-| `BCRYPT_SALT_ROUNDS` | No | `12` | Bcrypt salt rounds |
-| `DATABASE_URL_TEST` | No* | - | Test DB URL for auth DB integration tests |
-| `POSTGRES_DB` | Docker compose | - | DB name for postgres service |
-| `POSTGRES_USER` | Docker compose | - | DB user for postgres service |
-| `POSTGRES_PASSWORD` | Docker compose | - | DB password for postgres service |
-| `POSTGRES_PORT` | Docker compose | - | Host port mapped to postgres container |
 
-\* If `DATABASE_URL_TEST` is not set, auth DB integration suite is skipped by design.
+| Variable                | Required | Default       | Description                                                                     |
+| ----------------------- | -------- | ------------- | ------------------------------------------------------------------------------- |
+| `PORT`                  | No       | `3000`        | API port                                                                        |
+| `NODE_ENV`              | No       | `development` | Runtime environment                                                             |
+| `DATABASE_URL`          | Yes      | -             | PostgreSQL connection URL                                                       |
+| `DATABASE_URL_DOCKER`   | Helper   | -             | Suggested Docker-network URL (`db` host) to use as `DATABASE_URL` in containers |
+| `JWT_ACCESS_SECRET`     | Yes      | -             | JWT signing secret (min 32 chars)                                               |
+| `JWT_ACCESS_EXPIRES_IN` | No       | `15m`         | Access token TTL                                                                |
+| `BCRYPT_SALT_ROUNDS`    | No       | `12`          | Bcrypt salt rounds                                                              |
+| `DATABASE_URL_TEST`     | No*      | -             | Test DB URL for auth DB integration tests                                       |
+| `POSTGRES_DB`           | Compose  | -             | PostgreSQL database name used by Docker `db` service                            |
+| `POSTGRES_USER`         | Compose  | -             | PostgreSQL user used by Docker `db` service                                     |
+| `POSTGRES_PASSWORD`     | Compose  | -             | PostgreSQL password used by Docker `db` service                                 |
+| `POSTGRES_PORT`         | Compose  | -             | Host port mapped to PostgreSQL container (`5432` typical)                       |
+
+
+ If `DATABASE_URL_TEST` is not set, auth DB integration suite is skipped by design.
 
 ## Local Setup
 
-1. Install dependencies:
-   ```bash
+Quick start (local):
+
+```bash
+cp .env.example .env
+npm install
+# Ensure PostgreSQL is running locally
+# Create DBs: amenity_reservations and amenity_reservations_test
+npm run dev
+```
+
+Detailed steps:
+
+1. Copy env template:
+  ```bash
+   cp .env.example .env
+  ```
+2. Install dependencies:
+  ```bash
    npm install
-   ```
-2. Create `.env` from `.env.example` and fill real values.
-3. Ensure PostgreSQL is running and reachable via `DATABASE_URL`.
-4. Start API:
-   ```bash
+  ```
+3. Ensure local PostgreSQL is running.
+4. Create required local databases:
+  - `amenity_reservations`
+  - `amenity_reservations_test`
+5. Start API:
+  ```bash
    npm run dev
-   ```
-5. Health check:
-   ```bash
+  ```
+6. Health check:
+  ```bash
    curl http://localhost:3000/health
-   ```
+  ```
 
 Notes:
+
 - DB schema init is automatic on server startup (`users` table is ensured).
 - App fails fast on invalid/missing critical env vars.
+- `.env.example` includes local development defaults (`POSTGRES_USER=postgres`, `POSTGRES_PASSWORD=postgres`) for quick start only.
 
 ## Docker Setup
 
-1. Create `.env` (or export shell vars) with all values referenced in `docker-compose.yml`.
-2. Start services:
-   ```bash
+Quick start (docker):
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+1. Copy `.env.example` to `.env` and review values.
+2. For Dockerized API, set `DATABASE_URL` to use Docker hostname `db` (not `localhost`):
+  - Local app run: `postgresql://...@localhost:5432/...`
+  - Docker app run: `postgresql://...@db:5432/...`
+3. Start services:
+  ```bash
    docker compose up --build
-   ```
-3. Stop services:
-   ```bash
+  ```
+4. Stop services:
+  ```bash
    docker compose down
-   ```
+  ```
 
 Helper scripts:
 
@@ -110,6 +143,7 @@ npm run docker:down
 ```
 
 Security note:
+
 - Compose uses variable substitution (`${VAR}` / `${VAR:?error}`), no hardcoded secrets.
 - Missing required secrets fail fast before containers start.
 - Runtime image includes `/app/data` CSV fixtures required by reservation endpoints.
@@ -158,6 +192,7 @@ curl "http://localhost:3000/amenities/1/reservations?date=1593648000000"
 ```
 
 Typical errors:
+
 - `400`:
   ```json
   { "message": "Validation failed", "issues": ["..."] }
@@ -199,6 +234,7 @@ curl "http://localhost:3000/users/2/reservations"
 ```
 
 Typical errors:
+
 - `400`:
   ```json
   { "message": "Validation failed", "issues": ["..."] }
@@ -240,6 +276,7 @@ curl -X POST "http://localhost:3000/auth/register" \
 ```
 
 Typical errors:
+
 - `400`:
   ```json
   { "message": "Validation failed", "issues": ["..."] }
@@ -283,6 +320,7 @@ curl -X POST "http://localhost:3000/auth/login" \
 ```
 
 Typical errors:
+
 - `400`:
   ```json
   { "message": "Validation failed", "issues": ["..."] }
@@ -324,6 +362,7 @@ curl -X POST "http://localhost:3000/csv/parse" \
 ```
 
 Typical errors:
+
 - `401`:
   ```json
   { "message": "Unauthorized" }
@@ -353,6 +392,7 @@ npm run test:coverage
 ```
 
 Auth e2e requirement:
+
 - Auth integration tests use a dedicated PostgreSQL test database.
 - If `DATABASE_URL_TEST` is not set, auth e2e tests are intentionally skipped.
 - Other unit/integration tests still run.
@@ -360,20 +400,21 @@ Auth e2e requirement:
 ### How to run full test suite (including auth e2e)
 
 1. Create a separate test database (not your dev DB), for example:
-   - `amenity_reservations_test`
+  - `amenity_reservations_test`
 2. Set test DB connection string:
 
 ```bash
 export DATABASE_URL_TEST=postgresql://postgres:postgres@localhost:5432/amenity_reservations_test
 ```
 
-3. Run tests:
+1. Run tests:
 
 ```bash
 npm run test
 ```
 
 Safety note:
+
 - Never point `DATABASE_URL_TEST` to development or production databases.
 - Keep test DB fully isolated because tests can truncate/reset auth tables.
 
@@ -406,3 +447,4 @@ The project follows a lightweight Conventional Commits style:
 - `docs:` documentation only
 - `chore:` tooling/config/devops housekeeping
 - `refactor:` code improvements without behavior changes
+
