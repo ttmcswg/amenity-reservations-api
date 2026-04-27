@@ -8,7 +8,10 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "cors": "^2.8.6",
@@ -23,15 +26,20 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.1.0",
     "@types/node": "latest",
+    "@types/supertest": "^7.2.0",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "latest",
+    "jest": "^30.3.0",
     "nodemon": "latest",
     "prettier": "latest",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.9",
     "ts-node": "latest",
     "typescript": "latest"
   }
