@@ -1,6 +1,7 @@
 import { getAmenityReservationsByDate } from './amenityReservations.service';
 import { minutesToHHMM } from '../../utils/time';
 import { readCsv } from '../../utils/csvReader';
+import { invalidateCsvCache } from '../../utils/csvCache';
 
 jest.mock('../../utils/csvReader', () => ({
   readCsv: jest.fn(),
@@ -11,6 +12,7 @@ const mockReadCsv = readCsv as jest.MockedFunction<typeof readCsv>;
 describe('amenityReservations service', () => {
   beforeEach(() => {
     mockReadCsv.mockReset();
+    invalidateCsvCache();
   });
 
   describe('minutesToHHMM', () => {

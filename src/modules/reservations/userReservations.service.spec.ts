@@ -1,5 +1,6 @@
 import { getUserReservationsGroupedByDay } from './userReservations.service';
 import { readCsv } from '../../utils/csvReader';
+import { invalidateCsvCache } from '../../utils/csvCache';
 
 jest.mock('../../utils/csvReader', () => ({
   readCsv: jest.fn(),
@@ -10,6 +11,7 @@ const mockReadCsv = readCsv as jest.MockedFunction<typeof readCsv>;
 describe('userReservations service', () => {
   beforeEach(() => {
     mockReadCsv.mockReset();
+    invalidateCsvCache();
   });
 
   it('filters by userId, groups by date, sorts groups and reservations, enriches amenity names', () => {

@@ -1,5 +1,5 @@
 import path from 'path';
-import { readCsv } from '../../utils/csvReader';
+import { getCachedCsv } from '../../utils/csvCache';
 import { minutesToHHMM } from '../../utils/time';
 
 const AMENITIES_CSV_PATH = path.resolve(process.cwd(), 'data/amenity.csv');
@@ -99,8 +99,8 @@ export function getAmenityReservationsByDate(
   amenityId: number,
   date: number,
 ): { amenityExists: boolean; items: AmenityReservationView[] } {
-  const amenities = readCsv<AmenityCsvRow>(AMENITIES_CSV_PATH);
-  const reservations = readCsv<ReservationCsvRow>(RESERVATIONS_CSV_PATH);
+  const amenities = getCachedCsv<AmenityCsvRow>(AMENITIES_CSV_PATH);
+  const reservations = getCachedCsv<ReservationCsvRow>(RESERVATIONS_CSV_PATH);
 
   const amenity = amenities.find((item) => {
     const parsedAmenityId = Number(item.Id);

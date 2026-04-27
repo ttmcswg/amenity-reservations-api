@@ -1,5 +1,5 @@
 import path from 'path';
-import { readCsv } from '../../utils/csvReader';
+import { getCachedCsv } from '../../utils/csvCache';
 import { minutesToHHMM } from '../../utils/time';
 import { UserDayReservations, UserReservationDto } from './userReservations.types';
 
@@ -85,8 +85,8 @@ function mapReservationToDto(
 }
 
 export function getUserReservationsGroupedByDay(userId: number): UserDayReservations[] {
-  const amenities = readCsv<AmenityCsvRow>(AMENITIES_CSV_PATH);
-  const reservations = readCsv<ReservationCsvRow>(RESERVATIONS_CSV_PATH);
+  const amenities = getCachedCsv<AmenityCsvRow>(AMENITIES_CSV_PATH);
+  const reservations = getCachedCsv<ReservationCsvRow>(RESERVATIONS_CSV_PATH);
 
   const amenityNameById = new Map<number, string>();
   amenities.forEach((amenity) => {
